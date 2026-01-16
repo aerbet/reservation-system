@@ -1,4 +1,4 @@
-package kg.zhaparov.reservation_system;
+package kg.zhaparov.reservation;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
