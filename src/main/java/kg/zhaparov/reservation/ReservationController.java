@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 
 @RestController
@@ -29,8 +30,13 @@ public class ReservationController {
             @PathVariable("id") Long id
     ) {
         log.info("Called getReservationById: id=" + id);
-        return ResponseEntity.status(HttpStatus.OK)
-                .body(reservationService.getReservationById(id));
+        try {
+            return ResponseEntity.status(HttpStatus.OK)
+                    .body(reservationService.getReservationById(id));
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+
     }
 
     @GetMapping()
@@ -46,6 +52,37 @@ public class ReservationController {
         log.info("Called createReservation");
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(reservationService.createReservation(reservationToCreate));
-        //return reservationService.createReservation(reservationToCreate);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Reservation> updateReservation(
+            @PathVariable("id") Long id,
+            @RequestBody Reservation reservationToUpdate
+    ) {
+        log.info("Called updateReservation id={}, reservationToUpdate={}", id, reservationToUpdate);
+        var updated = reservationService.updateReservation(id, reservationToUpdate);
+        return ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReservation(
+            @PathVariable("id") Long id
+    ) {
+        log.info("Called deleteReservation: id={}", id);
+        try {
+            reservationService.deleteReservation(id);
+            return ResponseEntity.ok().build();
+        } catch (NoSuchElementException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/{id}/approve")
+    public ResponseEntity<Reservation> approveReservation(
+            @PathVariable("id") Long id
+    ) {
+        log.info("Called approveReservation: id={}", id);
+        var resvervation = reservationService.approveReservation(id);
+        return ResponseEntity.ok(resvervation);
     }
 }
