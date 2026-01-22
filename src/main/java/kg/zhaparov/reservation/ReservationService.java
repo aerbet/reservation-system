@@ -40,14 +40,12 @@ public class ReservationService {
     }
 
     public Reservation createReservation(Reservation reservationToCreate) {
-        if (reservationToCreate.id() != null) {
-            throw new IllegalArgumentException("ID should be empty");
-        }
-
         if (reservationToCreate.status() != null) {
             throw new IllegalArgumentException("ID should be empty");
         }
-
+        if (!reservationToCreate.startDate().isBefore(reservationToCreate.endDate())) {
+            throw new IllegalArgumentException("Start date should be before end date");
+        }
         var entityToSave = new ReservationEntity(
                 null,
                 reservationToCreate.userId(),
@@ -71,6 +69,9 @@ public class ReservationService {
         if (reservationEntity.getStatus() != ReservationStatus.PENDING) {
             throw new IllegalArgumentException("Cannot update reservation with status " + reservationEntity.getStatus());
         }
+        if (!reservationToUpdate.startDate().isBefore(reservationToUpdate.endDate())) {
+            throw new IllegalArgumentException("Start date should be before end date");
+        }
 
         var reservationToSave = new ReservationEntity(
                 reservationEntity.getId(),
@@ -88,8 +89,13 @@ public class ReservationService {
 
     @Transactional
     public void cancelReservation(Long id) {
-        if (!repository.existsById(id)) {
-            throw new EntityNotFoundException("Not found reservation with id = " + id);
+        var reservation = repository.findById(id)
+                        .orElseThrow(() -> new EntityNotFoundException("Not found reservation with id = " + id));
+        if (reservation.getStatus().equals(ReservationStatus.APPROVED)) {
+            throw new IllegalStateException("Cannot cancel reservation with status " + reservation.getStatus() + ". Contact with administrator.");
+        }
+        if (reservation.getStatus().equals(ReservationStatus.CANCELLED)) {
+            throw new IllegalStateException("Cannot cancel reservation with status " + reservation.getStatus() + ". Reservation already cancelled.");
         }
         repository.setStatus(id, ReservationStatus.CANCELLED);
         log.info("Successfully cancelled reservation: id={}", id);
