@@ -1,4 +1,4 @@
-package kg.zhaparov.reservation;
+package kg.zhaparov.reservation.reservations;
 
 public enum ReservationStatus {
     PENDING,

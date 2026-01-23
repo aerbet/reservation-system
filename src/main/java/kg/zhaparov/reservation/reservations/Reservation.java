@@ -1,4 +1,4 @@
-package kg.zhaparov.reservation;
+package kg.zhaparov.reservation.reservations;
 
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;

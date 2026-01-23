@@ -1,4 +1,4 @@
-package kg.zhaparov.reservation;
+package kg.zhaparov.reservation.web;
 
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
