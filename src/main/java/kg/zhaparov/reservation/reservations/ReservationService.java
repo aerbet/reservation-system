@@ -2,6 +2,7 @@ package kg.zhaparov.reservation.reservations;
 
 
 import jakarta.persistence.EntityNotFoundException;
+import kg.zhaparov.reservation.reservations.availability.ReservationAvailabilityService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
@@ -18,13 +19,16 @@ public class ReservationService {
 
     private final ReservationRepository repository;
     private final ReservationMapper mapper;
+    private final ReservationAvailabilityService availabilityService;
 
     public ReservationService(
             ReservationRepository repository,
-            ReservationMapper mapper
+            ReservationMapper mapper,
+            ReservationAvailabilityService availabilityService
     ) {
         this.repository = repository;
         this.mapper = mapper;
+        this.availabilityService = availabilityService;
     }
 
     public Reservation getReservationById(
@@ -116,12 +120,12 @@ public class ReservationService {
         if (reservationEntity.getStatus() != ReservationStatus.PENDING) {
             throw new IllegalArgumentException("Cannot approve reservation with status " + reservationEntity.getStatus());
         }
-        var isConflict = isReserved(
+        var isAvailableToApprove = availabilityService.isReservationAvailable(
                 reservationEntity.getRoomId(),
                 reservationEntity.getStartDate(),
                 reservationEntity.getEndDate()
         );
-        if (isConflict) {
+        if (isAvailableToApprove) {
             throw new IllegalArgumentException("Cannot approve reservation because of conflict ");
         }
 
@@ -129,25 +133,6 @@ public class ReservationService {
         repository.save(reservationEntity);
 
         return mapper.toDomain(reservationEntity);
-    }
-
-    private boolean isReserved(
-            Long roomId,
-            LocalDate startDate,
-            LocalDate endDate
-    ) {
-        List<Long> conflictingIds = repository.findConflictReservationIds(
-                roomId,
-                startDate,
-                endDate,
-                ReservationStatus.APPROVED
-        );
-
-        if (conflictingIds.isEmpty()) {
-            return false;
-        }
-        log.info("Conflict with ids = {}", conflictingIds);
-        return true;
     }
 
 
